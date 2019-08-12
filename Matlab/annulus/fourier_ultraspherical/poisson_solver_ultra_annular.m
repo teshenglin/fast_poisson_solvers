@@ -44,20 +44,15 @@ function u = poisson_solver_ultra_annular(M, N, innerR, outerR, gg, hh, f)
     fft_h = fft(h);
 
     %% construct the differentiation operater
-    % for ((x+beta)^2)*u''+(x+beta)*u'+(-k^2)*u=((x+beta)/alpha)^2*f
-    %   dl = fft_g(ii);
-    %   dr = fft_h(ii);
-
-    % L = M_2*D_2 + S_1*M_1*D_1 + S_1*S_0*M_0;
     % diff. oper.
-    D_1 = spdiags((0:M-1).', 1, M, M);   % first order
-    D_2 = 2*spdiags((0:M-1).', 2, M, M); % second order
+    D_1 = spdiags((0:M-1).', 1, M, M);
+    D_2 = 2*spdiags((0:M-1).', 2, M, M);
 
     % conversion oper.
     S_0 = spdiags([1 0.5*ones(1,M-1)].',0, M, M) ...
-        + spdiags(-0.5*ones(1,M).', 2, M, M);  % T -> C^1
+        + spdiags(-0.5*ones(1,M).', 2, M, M);
     S_1 = spdiags((1./(1:M)).',0, M, M) ...
-        + spdiags([0 0 (-1./(3:M+3))].', 2, M, M);      % C^1 -> C^2
+        + spdiags([0 0 (-1./(3:M+3))].', 2, M, M);
     S1S0 = S_1*S_0;
     [rows1s0,cols1s0,vals1s0] = find(S1S0);
     ind = rows1s0> (M-2);
@@ -68,11 +63,9 @@ function u = poisson_solver_ultra_annular(M, N, innerR, outerR, gg, hh, f)
     S1S0 = sparse(rows1s0, cols1s0, vals1s0);
 
     % Multip. oper
-    % (x + beta)
     M_1 = beta*speye(M) + spdiags(0.5*ones(1,M).', 1, M, M) ...
         + spdiags(0.5*ones(1,M).', -1, M, M);  
 
-    % (x + beta)^2
     v1 = beta^2 + 1/6 + ((0:M-1).*(4:M+3))./(3*(1:M).*(3:M+2)); % M(j,j)
     v2 = [0 (4:M+2)./(3:M+1)]*beta;                             % M(j,j+1)
     v3 = [0 0 (5:M+2)./(4*(3:M))];                              % M(j,j+2)
@@ -83,8 +76,6 @@ function u = poisson_solver_ultra_annular(M, N, innerR, outerR, gg, hh, f)
         + spdiags(v5.', -2, M, M);
 
     % combine the operators
-    % L = M_2*D_2 + S_1*M_1*D_1 + (-(k_mode(ii)^2)*)*S_1*S_0;
-    %   = L_0 + (-(k_mode(ii)^2)*)*S_1*S_0;
     L_0 = M_2*D_2 + S_1*M_1*D_1;
     [rowl0,coll0,vall0] = find(L_0);
     ind = rowl0> (M-2);
@@ -116,34 +107,22 @@ function u = poisson_solver_ultra_annular(M, N, innerR, outerR, gg, hh, f)
         F = r.^2.*fft_f(ii,:);
         ff = val2coef(F.');
         % RHS
-        % RHS = [d ; S_1(1:end-2,:)*S_0*ff]; d = [fft_g(ii);fft_h(ii)];
         RHS = [fft_g(ii);fft_h(ii); S1S0(3:end,:)*ff];
 
         % combine the operators
-        % L = M_2*D_2 + S_1*M_1*D_1 + (-(k_mode(ii)^2)*)*S_1*S_0;
         L = L_0 + (-(k_mode(ii)^2))*S1S0;
 
         % setup of LHS
-        % define LHS = [bc(l); bc(r); L(1:M-2, :)];
-        % separate LHS
-        % let LHS = A+ U*eye(2)*V
         L(1,1:3) = bc_dl(1:3);
         L(2,1:4) = bc_dr(1:4);
         V = [zeros(1,3) bc_dl(4:M); zeros(1,4) bc_dr(5:M)];
-        % U = zeros(M,2); U(1,1) = 1; U(2,2) = 1;
 
-        %% solve the linear system, to obtain coeff. of solution 
-        % coeff. of solution (coeff. of chebyshevT series)
-        % ifft_cheb_u(i,:) = (LHS\RHS).';
-
-        % solve LHS*y4 = RHS by Woodbury matrix identity
-        % let LHS = A + U*eye(2)*V 
+        %% solve the linear system to obtain coeff. of solution 
         y = L\[RHS U];
         y3 = (speye(2) + V*y(:,2:3))\V;
         y4 = y(:,1) - y(:,2:3)*(y3*y(:,1));
 
         %% change the coeff to value
-        % ifft_u(i,:) = coef2val2(ifft_cheb_u(i,:));
         fft_u(ii,:) = coef2val(y4).';
     end
     fft_u = [fft_u;conj(flipud(fft_u(2:N/2,:)))];
