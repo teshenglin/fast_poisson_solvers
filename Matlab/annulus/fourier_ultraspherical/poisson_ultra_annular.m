@@ -11,8 +11,8 @@
 %                u(outerR, theta) = h(theta)
 %
 % Example: 
-%      u = sin(5*x)
-%      f = -5^2*sin(10*x)
+%      u = sin(10*x)
+%      f = -10^2*sin(10*x)
 %      innerR = 0.5, outerR = 1.
 %      Dirichlet bc at inner boundary
 %                g = u(0.5, theta)= exp(0.5*(cos(theta) + sin(theta)))
@@ -21,9 +21,9 @@
 
 %% Setup grid
 % number of grid points in r-direction
-M = 400;
+M = 20;
 % number of grid points in theta-direction
-N = 800;
+N = 100;
 
 %% Setup domain
 % omega = {(x,y) = 0 < innerR < r < outerR} 
@@ -35,13 +35,13 @@ Y = @(R,T) R.*sin(T);
 
 %% Setup the exact solution
 %exact = @(R,T) exp(X(R,T) + Y(R,T));
-exact = @(R,T) sin(50*X(R,T));
+exact = @(R,T) sin(10*X(R,T));
 
-% f
+% f: right hand side of the equation
 %f = @(R,T) 2*exp(X(R,T) + Y(R,T));
-f = @(R,T) -50^2*exact(R,T);
+f = @(R,T) -10^2*exact(R,T);
 
-%% Setup boundary conditions and the right hand side of the equation f
+% Setup boundary conditions
 % Dirichlet bc at u(innerR)
 gg = @(TT) exact(innerR, TT);
 
@@ -59,12 +59,12 @@ toc
 % Chebyshev points
 x = cos((0:M-1)*pi/(M-1));
 
-% change valuable to grids in r-direction
+% change valuable to grids in radial direction
 alpha = 2/(outerR - innerR);
 beta = (outerR + innerR)/(outerR - innerR);
-r = (x + beta)/alpha;      
+r = (x + beta)/alpha;
 
-% equal spaced nodes in theta-direction
+% equal spaced nodes in polar direction
 dtheta = 2*pi/N;
 theta = (0:dtheta:(2*pi-dtheta));
 
@@ -74,5 +74,5 @@ theta = (0:dtheta:(2*pi-dtheta));
 exact_sol = exact(R, T);
 
 %% evaluate max error of the solution values
-error = max(max(abs((u)-exact_sol)));
+error = max(max(abs(u-exact_sol)));
 disp(['error in L-\infty norm = ', num2str(error)])
