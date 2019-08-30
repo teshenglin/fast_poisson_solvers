@@ -15,9 +15,9 @@
 %      f = -10^2*sin(10*x)
 %      innerR = 0.5, outerR = 1.
 %      Dirichlet bc at inner boundary
-%                g = u(0.5, theta)= exp(0.5*(cos(theta) + sin(theta)))
+%                g = u(0.5, theta)= sin(10*0.5*cos(theta))
 %      Dirichlet bc at outer boundary
-%                h = u(1,theta) = exp(cos(theta) + sin(theta))
+%                h = u(1,theta) = sin(10*1*cos(theta))
 
 %% Setup grid
 % number of grid points in r-direction
