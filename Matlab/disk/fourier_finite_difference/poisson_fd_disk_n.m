@@ -4,14 +4,14 @@
 % laplace(u) = f on omega = {(x,y) = 0 < x^2 + y^2 < 1}
 % with Fourier-Finite difference method
 %
-% Rmk: The boundary conditions are Dirichlet at R=1
-%       BCs are: u(1, theta) = h(theta)
+% Rmk: The boundary conditions are Neumann at R=1
+%       BCs are: u_r(1, theta) = h(theta)
 %
 % Example: 
 %      u = sin(10*x)
 %      f = -10^2*sin(10*x)
 %      Dirichlet bc:
-%                h = u(1,theta) = sin(10*cos(theta))
+%                h = u(1,theta) = cos(10*cos(theta))*10*cos(theta)
 
 %% Setup grid
 % number of grid points in r-direction
@@ -35,11 +35,11 @@ f = @(R,T) -10^2*exact(R,T);
 
 % Setup boundary conditions
 % Dirichlet bc at u(r=1)
-hh = @(TT) exact(1, TT);
+hh = @(TT) cos(10*cos(TT)).*10.*cos(TT);
 
 %% Fast Poisson solver on an unit disk
 tic
-u = poisson_solver_fd_disk_d(M, N, hh, f);
+u = poisson_solver_fd_disk_n(M, N, hh, f);
 toc
 
 %% In the following we check the accuracy of the numerical solutions
@@ -56,6 +56,10 @@ theta = (0:dtheta:(2*pi-dtheta));
 [R,T] = meshgrid(r, theta);
 
 exact_sol = exact(R, T);
+
+% The solution is accurate up to a constant
+% Here we perform a shift to be able to compare them
+u = u - u(1,1) + exact_sol(1,1);
 
 %% evaluate max error of the solution values
 error = max(max(abs(u-exact_sol)));
